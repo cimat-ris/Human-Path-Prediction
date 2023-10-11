@@ -13,7 +13,8 @@ class SceneDataset(Dataset):
 		"""
 
 		self.trajectories, self.meta, self.scene_list = self.split_trajectories_by_scene(data, total_len)
-		self.trajectories = self.trajectories * resize
+		for i in range(len(self.trajectories)):
+			self.trajectories[i] = self.trajectories[i] * resize
 
 	def __len__(self):
 		return len(self.trajectories)
@@ -25,14 +26,16 @@ class SceneDataset(Dataset):
 		return trajectory, meta, scene
 
 	def split_trajectories_by_scene(self, data, total_len):
-		trajectories = []
-		meta = []
-		scene_list = []
+		trajectories= []
+		meta        = []
+		scene_list  = []
 		for meta_id, meta_df in tqdm(data.groupby('sceneId', as_index=False), desc='Prepare Dataset'):
-			trajectories.append(meta_df[['x', 'y']].to_numpy().astype('float32').reshape(-1, total_len, 2))
+			d = meta_df[['x', 'y']].to_numpy().astype('float32').reshape(-1, total_len, 2)
+			trajectories.append(d)
 			meta.append(meta_df)
-			scene_list.append(meta_df.iloc()[0:1].sceneId.item())
-		return np.array(trajectories), meta, scene_list
+			s = meta_df.iloc()[0:1].sceneId.item()
+			scene_list.append(s)
+		return trajectories, meta, scene_list
 
 
 def scene_collate(batch):
