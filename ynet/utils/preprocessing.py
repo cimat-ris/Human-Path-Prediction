@@ -284,7 +284,8 @@ def augment_data(data, image_path='data/SDD/train', images={}, image_file='refer
 
 			data_rot['sceneId'] = scene + rot_angle
 			data_rot['metaId'] = data_rot['metaId'] + metaId_max + 1
-			data = data.append(data_rot)
+			#data = data.append(data_rot)
+			data = pd.concat([data, data_rot], ignore_index=True)
 
 	metaId_max = data['metaId'].max()
 	for scene in data.sceneId.unique():
@@ -292,7 +293,8 @@ def augment_data(data, image_path='data/SDD/train', images={}, image_file='refer
 		data_flip, im_flip = fliplr(data[data.sceneId == scene], im)
 		data_flip['sceneId'] = data_flip['sceneId'] + '_fliplr'
 		data_flip['metaId'] = data_flip['metaId'] + metaId_max + 1
-		data = data.append(data_flip)
+		#data = data.append(data_flip)
+		data = pd.concat([data, data_flip], ignore_index=True)
 		images[scene + '_fliplr'] = im_flip
 
 	return data, images
