@@ -40,8 +40,11 @@ class SceneDataset(Dataset):
 
 def scene_collate(batch):
 	trajectories = []
-	meta = []
-	scene = []
+	meta         = []
+	scene        = []
+	# JBH: I added this line to remove a warning that we had with the default code
+	if len(batch)==1:
+		return torch.Tensor(batch[0][0]),[batch[0][1]], batch[0][2]
 	for _batch in batch:
 		trajectories.append(_batch[0])
 		meta.append(_batch[1])
