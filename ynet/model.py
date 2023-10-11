@@ -4,7 +4,7 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 import numpy as np
-
+import logging
 from utils.softargmax import SoftArgmax2D, create_meshgrid
 from utils.preprocessing import augment_data, create_images_dict
 from utils.image_utils import create_gaussian_heatmap_template, create_dist_mat, \
@@ -238,7 +238,7 @@ class YNet:
 		pred_len = self.pred_len
 		total_len = pred_len + obs_len
 
-		print('Preprocess data')
+		logging.info('Preprocess data')
 		dataset_name = dataset_name.lower()
 		if dataset_name == 'sdd':
 			image_file_name = 'reference.jpg'
@@ -259,6 +259,7 @@ class YNet:
 			self.homo_mat = None
 			seg_mask = False
 
+		logging.info('Augmenting data')
 		# Load train images and augment train data and images
 		df_train, train_images = augment_data(train_data, image_path=train_image_path, image_file=image_file_name,
 											  seg_mask=seg_mask)
@@ -377,7 +378,7 @@ class YNet:
 		test_images = create_images_dict(data, image_path=image_path, image_file=image_file_name)
 
 		test_dataset = SceneDataset(data, resize=params['resize'], total_len=total_len)
-		test_loader = DataLoader(test_dataset, batch_size=1, collate_fn=scene_collate)
+		test_loader  = DataLoader(test_dataset, batch_size=1, collate_fn=scene_collate)
 
 		# Preprocess images, in particular resize, pad and normalize as semantic segmentation backbone requires
 		resize(test_images, factor=params['resize'], seg_mask=seg_mask)
@@ -396,7 +397,7 @@ class YNet:
 
 		print('Start testing')
 		for e in tqdm(range(rounds), desc='Round'):
-			test_ADE, test_FDE = evaluate(model, test_loader, test_images, num_goals, num_traj,
+			test_ADE, test_FDE, goals = evaluate(model, test_loader, test_images, num_goals, num_traj,
 										  obs_len=obs_len, batch_size=batch_size,
 										  device=device, input_template=input_template,
 										  waypoints=params['waypoints'], resize=params['resize'],
@@ -405,7 +406,7 @@ class YNet:
 										  rel_thresh=params['rel_threshold'], CWS_params=params['CWS_params'],
 										  dataset_name=dataset_name, homo_mat=self.homo_mat, mode='test')
 			print(f'Round {e}: \nTest ADE: {test_ADE} \nTest FDE: {test_FDE}')
-
+			print(len(goals))
 			self.eval_ADE.append(test_ADE)
 			self.eval_FDE.append(test_FDE)
 
@@ -417,30 +418,3 @@ class YNet:
 
 	def save(self, path):
 		torch.save(self.model.state_dict(), path)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
